@@ -1,7 +1,9 @@
+import asteroid
 from screen import Screen
 import sys
 
 from ship import Ship
+from asteroid import Asteroid
 from random import randint
 import math
 
@@ -21,6 +23,9 @@ class GameRunner:
         self.__screen_min_y = Screen.SCREEN_MIN_Y
         self.__ship = Ship(randint(self.__screen_min_x, self.__screen_max_x),
                            randint(self.__screen_min_y, self.__screen_max_y))
+        # self.__screen_asteroids = Screen._init_keys_values().
+        self.__asteroids_lst = []
+
 
     def run(self):
         self._do_loop()
@@ -43,10 +48,14 @@ class GameRunner:
         self.__update_ship_speed()
         self.__update_ship_direction()
 
-    def __draw_all(self):
+    def __draw_all(self, __asteroid=None):
         self.__screen.draw_ship(self.__ship.get_loc_x(),
                                 self.__ship.get_loc_y(),
                                 self.__ship.get_direction())
+        for ast in self.__asteroids_lst:
+            self.__screen.draw_asteroid(ast,
+                                        ast.get_loc_x(),
+                                        ast.get_loc_y())
 
     def __update_ship_direction(self):
         direction = self.__ship.get_direction()
@@ -79,6 +88,14 @@ class GameRunner:
             if not self.__screen.is_up_pressed():
                 ship.set_speed(new_speed_x, new_speed_y)
                 up_pressed = False
+    #########################################################################
+    # part 3
+    def generate_draw_asteroids(self):
+        Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
+                 randint(self.__screen_min_y, self.__screen_max_y))
+        for num in range(asteroids_amount)
+        self.__screen.register_asteroid()
+
 
 
 def main(amount):
