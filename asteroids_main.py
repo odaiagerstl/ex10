@@ -4,7 +4,7 @@ import sys
 
 from ship import Ship
 from asteroid import Asteroid
-from  torpedo import Torpedo
+from torpedo import Torpedo
 from random import randint
 import math
 
