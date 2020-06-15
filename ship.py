@@ -1,10 +1,12 @@
 from random import Random
 import math
 
+
 class Ship:
     """
     DESCRIPTION
     """
+
     def __init__(self, loc_x, loc_y):
         """
         DESCRIPTION
@@ -15,6 +17,7 @@ class Ship:
         self.__speed_x = 0
         self.__speed_y = 0
         self.__direction = math.degrees(0)
+        self.__radius = 1
 
     def get_loc_x(self):
         return self.__loc_x
@@ -44,3 +47,6 @@ class Ship:
     def set_speed(self, speed_x, speed_y):
         self.__speed_x = speed_x
         self.__speed_y = speed_y
+
+    def get_radius(self):
+        return self.__radius
