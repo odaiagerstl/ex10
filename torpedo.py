@@ -3,12 +3,12 @@ class Torpedo:
     def
     """
 
-    def __init__(self, loc_x, loc_y):
+    def __init__(self, loc_x, loc_y,speed_x, speed_y, direction):
         self.__loc_x = loc_x
         self.__loc_y = loc_y
-        self.__speed_x = 0
-        self.__speed_y = 0
-        self.__direction = 0
+        self.__speed_x = speed_x
+        self.__speed_y = speed_y
+        self.__direction = direction
 
     def get_loc_x(self):
         return self.__loc_x
@@ -32,3 +32,9 @@ class Torpedo:
     def set_speed(self, speed_x, speed_y):
         self.__speed_x = speed_x
         self.__speed_y = speed_y
+
+    def get_direction(self):
+        return self.__direction
+
+    def set_direction(self, new_direction):
+        self.__direction = new_direction

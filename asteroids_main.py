@@ -8,7 +8,8 @@ from torpedo import Torpedo
 from random import randint
 import math
 
-DEFAULT_ASTEROIDS_NUM = 5
+DEFAULT_ASTEROIDS_NUM = 1
+DEFAULT_TORPEDOS_NUM = 10
 SIZE_ASTEROIDS = 3
 RIGHT = "right"
 LEFT = "left"
@@ -16,6 +17,15 @@ LOST_LIFE_MSG = "You have lost a life."
 LOST_LIFE_TITLE = "Lost life."
 MIN_ASTEROID_SPEED = 1
 MAX_ASTEROID_SPEED = 4
+
+
+def calc_speed_of_tor_from_obj(obj, alpha):
+    obj_speed_x = obj.get_speed_x() + \
+                  math.cos(math.radians(obj.get_direction())) * alpha
+    obj_speed_y = obj.get_speed_y() + \
+                  math.sin(math.radians(obj.get_direction())) * alpha
+    return obj_speed_x, obj_speed_y
+
 
 
 class GameRunner:
@@ -30,6 +40,7 @@ class GameRunner:
         self.__ship = Ship(randint(self.__screen_min_x, self.__screen_max_x),
                            randint(self.__screen_min_y, self.__screen_max_y))
         self.__asteroids_lst = []
+        self.__torpedos_lst = []
 
     def run(self):
         self._do_loop()
@@ -54,7 +65,9 @@ class GameRunner:
         self.__update_ship_speed()
         self.__update_ship_direction()
         self.__update_asteroid_location()
-
+        self.__update_torpedo_location()
+        self.disparar_torpedo()
+        # self.__update_obj_speed(2)
 
     def __draw_all(self, __asteroid=None):
         self.__screen.draw_ship(self.__ship.get_loc_x(),
@@ -64,13 +77,15 @@ class GameRunner:
             self.__screen.draw_asteroid(ast,
                                         ast.get_loc_x(),
                                         ast.get_loc_y())
+        for tor in self.__torpedos_lst:
+            self.__screen.draw_torpedo(tor, tor.get_loc_x(), tor.get_loc_y(), tor.get_direction())
 
     def __update_ship_direction(self):
         direction = self.__ship.get_direction()
         if self.__screen.is_right_pressed():
-            direction += math.degrees(7)
+            direction -= 7
         elif self.__screen.is_left_pressed():
-            direction -= math.degrees(7)
+            direction += 7
         self.__ship.set_direction(direction)
 
     def __update_ship_location(self):
@@ -92,20 +107,20 @@ class GameRunner:
                 % (max_y - min_y)
         return new_x, new_y
 
-
     def __update_ship_speed(self):
-        up_pressed = False
-        if self.__screen.is_up_pressed():
-            up_pressed = True
-        ship = self.__ship
-        while up_pressed:
-            new_speed_x = ship.get_speed_x() + \
-                          math.cos(math.radians(ship.get_direction()))
-            new_speed_y = ship.get_speed_y() + \
-                          math.sin(math.radians(ship.get_direction()))
-            if not self.__screen.is_up_pressed():
-                ship.set_speed(new_speed_x, new_speed_y)
-                up_pressed = False
+        # up_pressed = False
+        # ship = self.__ship
+        # if self.__screen.is_up_pressed():
+        #     up_pressed = True
+        # while up_pressed:
+        #     new_speed_x, new_speed_y = self.__calc_speed_of_tor_from_obj(self.__ship, 1)
+        #     if not self.__screen.is_up_pressed():
+        #         ship.set_speed(new_speed_x, new_speed_y)
+        #         up_pressed = False
+
+        while self.__screen.is_up_pressed():
+            new_speed_x, new_speed_y = calc_speed_of_tor_from_obj(self.__ship, 1)  # ship is 1
+            self.__ship.set_speed(new_speed_x, new_speed_y)
 
     def __check_intersections(self):
         for ast in self.__asteroids_lst:
@@ -115,9 +130,9 @@ class GameRunner:
                 self.__screen.unregister_asteroid(ast)
                 self.__screen.remove_life()
 
-
     #########################################################################
     # part 3
+
     def __generate_draw_asteroids(self):
         while len(self.__asteroids_lst) < DEFAULT_ASTEROIDS_NUM:
             now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
@@ -130,9 +145,19 @@ class GameRunner:
 
     #########################################################################
     # part 4
-    torpedo = Torpedo(__shi)
     def disparar_torpedo(self):
-        self.__screen.draw_torpedo()
+        if len(self.__torpedos_lst) < DEFAULT_TORPEDOS_NUM:
+            if self.__screen.is_space_pressed():
+                tor_speed_x, tor_speed_y = calc_speed_of_tor_from_obj(self.__ship, 2)
+                torpedo = Torpedo(self.__ship.get_loc_x(), self.__ship.get_loc_y(), tor_speed_x, tor_speed_y,
+                                  self.__ship.get_direction())
+                self.__screen.register_torpedo(torpedo)
+                self.__torpedos_lst.append(torpedo)
+
+    def __update_torpedo_location(self):
+        for tor in self.__torpedos_lst:
+            new_x, new_y = self.__calc_new_location(tor)
+            tor.set_location(new_x, new_y)
 
 
 def main(amount):
