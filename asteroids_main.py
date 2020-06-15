@@ -4,6 +4,7 @@ import sys
 
 from ship import Ship
 from asteroid import Asteroid
+from  torpedo import Torpedo
 from random import randint
 import math
 
@@ -126,6 +127,12 @@ class GameRunner:
             if not now_asteroid.has_intersection(self.__ship):
                 self.__asteroids_lst.append(now_asteroid)
                 self.__screen.register_asteroid(now_asteroid, SIZE_ASTEROIDS)
+
+    #########################################################################
+    # part 4
+    torpedo = Torpedo(__shi)
+    def disparar_torpedo(self):
+        self.__screen.draw_torpedo()
 
 
 def main(amount):
