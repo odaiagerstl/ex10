@@ -8,7 +8,7 @@ from torpedo import Torpedo
 from random import randint
 import math
 
-DEFAULT_ASTEROIDS_NUM = 1
+DEFAULT_ASTEROIDS_NUM = 5
 DEFAULT_TORPEDOS_NUM = 10
 SIZE_ASTEROIDS = 3
 RIGHT = "right"
@@ -41,6 +41,7 @@ class GameRunner:
                            randint(self.__screen_min_y, self.__screen_max_y))
         self.__asteroids_lst = []
         self.__torpedos_lst = []
+        self.__score = 0
 
     def run(self):
         self._do_loop()
@@ -55,7 +56,7 @@ class GameRunner:
 
     def _game_loop(self):
         # TODO: Your code goes here
-        self.__generate_draw_asteroids()
+        self.__generate_asteroids()
         self.__draw_all()
         self.__all_obj_updates()
         self.__check_intersections()
@@ -67,7 +68,6 @@ class GameRunner:
         self.__update_asteroid_location()
         self.__update_torpedo_location()
         self.disparar_torpedo()
-        # self.__update_obj_speed(2)
 
     def __draw_all(self, __asteroid=None):
         self.__screen.draw_ship(self.__ship.get_loc_x(),
@@ -129,11 +129,19 @@ class GameRunner:
                 self.__asteroids_lst.remove(ast)
                 self.__screen.unregister_asteroid(ast)
                 self.__screen.remove_life()
+        if self.__asteroids_lst:
+            for ast in self.__asteroids_lst:
+                for torp in self.__torpedos_lst:
+                    print(self.__asteroids_lst)
+                    if ast.has_intersection(torp):
+                        self.__asteroids_lst.remove(ast)
+                        self.__screen.unregister_asteroid(ast)
+                        self.__generate_baby_asteroids(ast, torp)
+                        self.__add_score(ast.get_size())
 
     #########################################################################
     # part 3
-
-    def __generate_draw_asteroids(self):
+    def __generate_asteroids(self):
         while len(self.__asteroids_lst) < DEFAULT_ASTEROIDS_NUM:
             now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
                                     randint(self.__screen_min_y, self.__screen_max_y),
@@ -143,6 +151,28 @@ class GameRunner:
                 self.__asteroids_lst.append(now_asteroid)
                 self.__screen.register_asteroid(now_asteroid, SIZE_ASTEROIDS)
 
+    def __generate_baby_asteroids(self, ast, torp):
+        size = ast.get_size()
+        x, y = ast.get_loc_x(), ast.get_loc_y
+        torp_speed_x, torp_speed_y = torp.get_speed_x(), torp.get_speed_y()
+        ast_speed_x, ast_speed_y = ast.get_speed_x(), ast.get_speed_y()
+        if size != 1:
+            if size == 3:
+                baby_size = 2
+            elif size == 2:
+                baby_size = 1
+            new_speed_x = (torp_speed_x + ast_speed_x) \
+                            / math.sqrt(ast_speed_x ** 2 + ast_speed_y ** 2)
+            new_speed_y = -(torp_speed_y + ast_speed_y) \
+                            / math.sqrt(ast_speed_x ** 2 + ast_speed_y ** 2)
+            baby_asteroid_1 = Asteroid(x, y, new_speed_x, new_speed_y)
+            baby_asteroid_2 = Asteroid(x, y, -new_speed_x, -new_speed_y)
+            self.__asteroids_lst.append(baby_asteroid_1)
+            self.__asteroids_lst.append(baby_asteroid_2)
+            self.__screen.register_asteroid(baby_asteroid_1, baby_size)
+            self.__screen.register_asteroid(baby_asteroid_2, baby_size)
+
+
     #########################################################################
     # part 4
     def disparar_torpedo(self):
@@ -151,14 +181,24 @@ class GameRunner:
                 tor_speed_x, tor_speed_y = calc_speed_of_tor_from_obj(self.__ship, 2)
                 torpedo = Torpedo(self.__ship.get_loc_x(), self.__ship.get_loc_y(), tor_speed_x, tor_speed_y,
                                   self.__ship.get_direction())
-                self.__screen.register_torpedo(torpedo)
                 self.__torpedos_lst.append(torpedo)
+                self.__screen.register_torpedo(torpedo)
+
 
     def __update_torpedo_location(self):
         for tor in self.__torpedos_lst:
             new_x, new_y = self.__calc_new_location(tor)
+            print("new x", new_x, "new_y", new_y)
             tor.set_location(new_x, new_y)
 
+    def __add_score(self, asteroid_size):
+        if asteroid_size == 3:
+            self.__score += 20
+        elif asteroid_size == 2:
+            self.__score += 50
+        elif asteroid_size == 3:
+            self.__score += 100
+        self.__screen.set_score(self.__score)
 
 def main(amount):
     runner = GameRunner(amount)

@@ -10,7 +10,6 @@ class Ship:
         """
         DESCRIPTION
         """
-        # TODO: make locations random
         self.__loc_x = loc_x
         self.__loc_y = loc_y
         self.__speed_x = 0

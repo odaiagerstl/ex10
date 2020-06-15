@@ -6,6 +6,7 @@ class Torpedo:
     def __init__(self, loc_x, loc_y,speed_x, speed_y, direction):
         self.__loc_x = loc_x
         self.__loc_y = loc_y
+        self.__radius = 4
         self.__speed_x = speed_x
         self.__speed_y = speed_y
         self.__direction = direction
@@ -38,3 +39,6 @@ class Torpedo:
 
     def set_direction(self, new_direction):
         self.__direction = new_direction
+
+    def get_radius(self):
+        return self.__radius
