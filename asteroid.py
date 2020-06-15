@@ -7,7 +7,6 @@ class Asteroid:
         self.__loc_y = loc_y
         self.__speed_x = 0
         self.__speed_y = 0
-        self.__size = 3
 
     def get_loc_x(self):
         return self.__loc_x

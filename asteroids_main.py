@@ -8,6 +8,7 @@ from random import randint
 import math
 
 DEFAULT_ASTEROIDS_NUM = 5
+SIZE_ASTEROIDS = 3
 RIGHT = "right"
 LEFT = "left"
 
@@ -23,9 +24,9 @@ class GameRunner:
         self.__screen_min_y = Screen.SCREEN_MIN_Y
         self.__ship = Ship(randint(self.__screen_min_x, self.__screen_max_x),
                            randint(self.__screen_min_y, self.__screen_max_y))
-        # self.__screen_asteroids = Screen._init_keys_values().
+        self.__asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
+                                   randint(self.__screen_min_y, self.__screen_max_y))
         self.__asteroids_lst = []
-
 
     def run(self):
         self._do_loop()
@@ -37,6 +38,7 @@ class GameRunner:
         # Set the timer to go off again
         self.__screen.update()
         self.__screen.ontimer(self._do_loop, 5)
+        self.generate_draw_asteroids()
 
     def _game_loop(self):
         # TODO: Your code goes here
@@ -88,14 +90,18 @@ class GameRunner:
             if not self.__screen.is_up_pressed():
                 ship.set_speed(new_speed_x, new_speed_y)
                 up_pressed = False
+
     #########################################################################
     # part 3
     def generate_draw_asteroids(self):
-        Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
-                 randint(self.__screen_min_y, self.__screen_max_y))
-        for num in range(asteroids_amount)
-        self.__screen.register_asteroid()
-
+        while len(self.__asteroids_lst) < DEFAULT_ASTEROIDS_NUM:
+        now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
+                            randint(self.__screen_min_y, self.__screen_max_y))
+        if True:
+            self.__asteroids_lst.append(now_asteroid)
+            self.__screen.register_asteroid(now_asteroid, SIZE_ASTEROIDS)
+            self.__screen.draw_asteroid(now_asteroid, now_asteroid.get_loc_x(),
+                                            now_asteroid.get_loc_y())
 
 
 def main(amount):
