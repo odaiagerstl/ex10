@@ -27,7 +27,6 @@ def calc_speed_of_tor_from_obj(obj, alpha):
     return obj_speed_x, obj_speed_y
 
 
-
 class GameRunner:
 
     def __init__(self, asteroids_amount):
@@ -45,7 +44,7 @@ class GameRunner:
 
     def run(self):
         self.__generate_asteroids()
-        
+
         self._do_loop()
         self.__screen.start_screen()
 
@@ -68,7 +67,7 @@ class GameRunner:
         self.__update_ship_direction()
         self.__update_asteroid_location()
         self.__update_torpedo_location()
-        self.disparar_torpedo()
+        self.__shoot_torpedo()
 
     def __draw_all(self, __asteroid=None):
         self.__screen.draw_ship(self.__ship.get_loc_x(),
@@ -78,8 +77,22 @@ class GameRunner:
             self.__screen.draw_asteroid(ast,
                                         ast.get_loc_x(),
                                         ast.get_loc_y())
-        for tor in self.__torpedos_lst:
-            self.__screen.draw_torpedo(tor, tor.get_loc_x(), tor.get_loc_y(), tor.get_direction())
+        torp_to_remove = []
+        for i in range(len(self.__torpedos_lst)):
+            torp = self.__torpedos_lst[i]
+            time_alive = torp.get_time_alive()
+            if time_alive < 200:
+                torp.set_time_alive(time_alive + 1)
+                self.__screen.draw_torpedo(torp, torp.get_loc_x(),
+                                           torp.get_loc_y(),
+                                           torp.get_direction())
+            else:
+                torp_to_remove.append(torp)
+
+        for torp in torp_to_remove:
+            self.__screen.unregister_torpedo(torp)
+            self.__torpedos_lst.remove(torp)
+
 
     def __update_ship_direction(self):
         direction = self.__ship.get_direction()
@@ -89,76 +102,80 @@ class GameRunner:
             direction += 7
         self.__ship.set_direction(direction)
 
+
     def __update_ship_location(self):
         new_x, new_y = self.__calc_new_location(self.__ship)
         self.__ship.set_location(new_x, new_y)
+
 
     def __update_asteroid_location(self):
         for ast in self.__asteroids_lst:
             new_x, new_y = self.__calc_new_location(ast)
             ast.set_location(new_x, new_y)
 
+
     def __calc_new_location(self, obj):
-        print(obj)
         min_x, max_x = self.__screen_min_x, self.__screen_max_x
         min_y, max_y = self.__screen_min_y, self.__screen_max_y
 
-        new_x = min_x + (obj.get_loc_x() + obj.get_speed_x() - min_x) \
-                % (max_x - min_x)
-        new_y = min_y + (obj.get_loc_y() + obj.get_speed_y() - min_y) \
-                % (max_y - min_y)
+        new_x = min_x + ((obj.get_loc_x() + obj.get_speed_x() - min_x) % (max_x - min_x))
+        new_y = min_y + ((obj.get_loc_y() + obj.get_speed_y() - min_y) % (max_y - min_y))
         return new_x, new_y
 
-    def __update_ship_speed(self):
-        # up_pressed = False
-        # ship = self.__ship
-        # if self.__screen.is_up_pressed():
-        #     up_pressed = True
-        # while up_pressed:
-        #     new_speed_x, new_speed_y = self.__calc_speed_of_tor_from_obj(self.__ship, 1)
-        #     if not self.__screen.is_up_pressed():
-        #         ship.set_speed(new_speed_x, new_speed_y)
-        #         up_pressed = False
 
+    def __update_ship_speed(self):
         while self.__screen.is_up_pressed():
             new_speed_x, new_speed_y = calc_speed_of_tor_from_obj(self.__ship, 1)  # ship is 1
             self.__ship.set_speed(new_speed_x, new_speed_y)
 
+
+    def __solve_torpedoes_intersections(self):
+        length = len(self.__torpedos_lst)
+        torp_to_remove = []
+        ast_to_remove = set()
+        for i in range(length):
+            torp = self.__torpedos_lst[i]
+            asteroid_intersected = self.__get_intersected_astroid(torp)
+            if self.__get_intersected_astroid(torp) is not None:
+                self.__generate_baby_asteroids(asteroid_intersected, torp)
+                torp_to_remove.append(self.__torpedos_lst[i])
+                ast_to_remove.add(asteroid_intersected)
+        for torp in torp_to_remove:
+            self.__screen.unregister_torpedo(torp)
+            self.__torpedos_lst.remove(torp)
+
+        for ast in ast_to_remove:
+            self.__screen.unregister_asteroid(ast)
+            self.__asteroids_lst.remove(ast)
+
+
+    def __get_intersected_astroid(self, obj):
+        length = len(self.__asteroids_lst)
+        for i in range(length):
+            ast = self.__asteroids_lst[i]
+            if ast.has_intersection(obj):
+                return ast
+
+
+    def __solve_ship_intersections(self):
+        asteroid_intersected = self.__get_intersected_astroid(self.__ship)
+        if asteroid_intersected is not None:
+            self.__screen.unregister_asteroid(asteroid_intersected)
+            self.__asteroids_lst.remove(asteroid_intersected)
+            self.__screen.show_message(LOST_LIFE_TITLE, LOST_LIFE_MSG)
+            self.__screen.remove_life()
+
+
     def __check_intersections(self):
-        survived_ast_lst = []
-        survived_torp_lst = []
-        for ast in self.__asteroids_lst:
-            if ast.has_intersection(self.__ship):
-                self.__screen.unregister_asteroid(ast)
-                self.__asteroids_lst.remove(ast)
-                self.__screen.show_message(LOST_LIFE_TITLE, LOST_LIFE_MSG)
-                self.__screen.remove_life()
-            # else:
-            #     survived_ast_lst.append(ast)
-        if self.__asteroids_lst:
-            for ast in self.__asteroids_lst:
-                for torp in self.__torpedos_lst:
-                    print(self.__asteroids_lst)
-                    if ast.has_intersection(torp):
-                        self.__generate_baby_asteroids(ast, torp)
-                        self.__screen.unregister_asteroid(ast)
-                        self.__screen.unregister_torpedo(torp)
-                        self.__asteroids_lst.remove(ast)
-                        self.__torpedos_lst.remove(torp)
-                        break
-                        #self.__add_score(ast.get_size())
-                    # else:
-                    #     survived_ast_lst.append(ast)
-                    #     survived_torp_lst.append(torp)
+        self.__solve_ship_intersections()
+        self.__solve_torpedoes_intersections()
 
-                
-        # self.__asteroids_lst = survived_ast_lst
-        # self.__torpedos_lst = survived_torp_lst
 
-    #########################################################################
+#########################################################################
     # part 3
     def __generate_asteroids(self):
         for i in range(DEFAULT_ASTEROIDS_NUM):
+            # TODO: edit asteroid speeds
             now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
                                     randint(self.__screen_min_y, self.__screen_max_y),
                                     randint(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED),
@@ -167,22 +184,29 @@ class GameRunner:
                 self.__asteroids_lst.append(now_asteroid)
                 self.__screen.register_asteroid(now_asteroid, SIZE_ASTEROIDS)
 
-    def __generate_baby_asteroids(self, ast, torp):
-        size = ast.get_size()
-        x, y = ast.get_loc_x(), ast.get_loc_y
+
+    def __calc_baby_ast_speed(self, ast, torp):
         torp_speed_x, torp_speed_y = torp.get_speed_x(), torp.get_speed_y()
         ast_speed_x, ast_speed_y = ast.get_speed_x(), ast.get_speed_y()
+        new_speed_x = (torp_speed_x + ast_speed_x) \
+                      / math.sqrt(ast_speed_x ** 2 + ast_speed_y ** 2)
+        new_speed_y = -(torp_speed_y + ast_speed_y) \
+                      / math.sqrt(ast_speed_x ** 2 + ast_speed_y ** 2)
+        return new_speed_x, new_speed_y
+
+
+    def __generate_baby_asteroids(self, ast, torp):
+        size = ast.get_size()
+        x, y = ast.get_loc_x(), ast.get_loc_y()
+        new_speeds = self.__calc_baby_ast_speed(ast, torp)
+        baby_speed_x, baby_speed_y = new_speeds[0], new_speeds[1]
         if size != 1:
             if size == 3:
                 baby_size = 2
             elif size == 2:
                 baby_size = 1
-            new_speed_x = (torp_speed_x + ast_speed_x) \
-                            / math.sqrt(ast_speed_x ** 2 + ast_speed_y ** 2)
-            new_speed_y = -(torp_speed_y + ast_speed_y) \
-                            / math.sqrt(ast_speed_x ** 2 + ast_speed_y ** 2)
-            baby_asteroid_1 = Asteroid(x, y, new_speed_x, new_speed_y)
-            baby_asteroid_2 = Asteroid(x, y, -new_speed_x, -new_speed_y)
+            baby_asteroid_1 = Asteroid(x, y, baby_speed_x, baby_speed_y)
+            baby_asteroid_2 = Asteroid(x, y, -baby_speed_x, -baby_speed_y)
             self.__asteroids_lst.append(baby_asteroid_1)
             self.__asteroids_lst.append(baby_asteroid_2)
             self.__screen.register_asteroid(baby_asteroid_1, baby_size)
@@ -191,7 +215,8 @@ class GameRunner:
 
     #########################################################################
     # part 4
-    def disparar_torpedo(self):
+
+    def __shoot_torpedo(self):
         if len(self.__torpedos_lst) < DEFAULT_TORPEDOS_NUM:
             if self.__screen.is_space_pressed():
                 tor_speed_x, tor_speed_y = calc_speed_of_tor_from_obj(self.__ship, 2)
@@ -207,6 +232,7 @@ class GameRunner:
             print("new x", new_x, "new_y", new_y)
             tor.set_location(new_x, new_y)
 
+
     def __add_score(self, asteroid_size):
         if asteroid_size == 3:
             self.__score += 20
@@ -215,6 +241,7 @@ class GameRunner:
         elif asteroid_size == 3:
             self.__score += 100
         self.__screen.set_score(self.__score)
+
 
 def main(amount):
     runner = GameRunner(amount)

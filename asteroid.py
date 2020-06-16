@@ -45,8 +45,8 @@ class Asteroid:
         print("self x", self.__loc_x)
         print("self y", self.__loc_y)
         print(type(obj))
-        d1 = obj.get_loc_x() - self.__loc_x
-        d2 = obj.get_loc_y() - self.__loc_y
+        d1 = obj.get_loc_x() - self.get_loc_x()
+        d2 = obj.get_loc_y() - self.get_loc_y()
         distance = math.sqrt(d1 ** 2 + d2 ** 2)
         if distance <= self.__radius + obj.get_radius():
             return True

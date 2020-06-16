@@ -10,6 +10,7 @@ class Torpedo:
         self.__speed_x = speed_x
         self.__speed_y = speed_y
         self.__direction = direction
+        self.__time_alive = 0
 
     def get_loc_x(self):
         return self.__loc_x
@@ -42,3 +43,9 @@ class Torpedo:
 
     def get_radius(self):
         return self.__radius
+
+    def get_time_alive(self):
+        return self.__time_alive
+
+    def set_time_alive(self, new_time):
+        self.__time_alive = new_time
