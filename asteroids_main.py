@@ -44,6 +44,8 @@ class GameRunner:
         self.__score = 0
 
     def run(self):
+        self.__generate_asteroids()
+        
         self._do_loop()
         self.__screen.start_screen()
 
@@ -56,7 +58,6 @@ class GameRunner:
 
     def _game_loop(self):
         # TODO: Your code goes here
-        self.__generate_asteroids()
         self.__draw_all()
         self.__all_obj_updates()
         self.__check_intersections()
@@ -98,6 +99,7 @@ class GameRunner:
             ast.set_location(new_x, new_y)
 
     def __calc_new_location(self, obj):
+        print(obj)
         min_x, max_x = self.__screen_min_x, self.__screen_max_x
         min_y, max_y = self.__screen_min_y, self.__screen_max_y
 
@@ -123,26 +125,40 @@ class GameRunner:
             self.__ship.set_speed(new_speed_x, new_speed_y)
 
     def __check_intersections(self):
+        survived_ast_lst = []
+        survived_torp_lst = []
         for ast in self.__asteroids_lst:
             if ast.has_intersection(self.__ship):
-                self.__screen.show_message(LOST_LIFE_TITLE, LOST_LIFE_MSG)
-                self.__asteroids_lst.remove(ast)
                 self.__screen.unregister_asteroid(ast)
+                self.__asteroids_lst.remove(ast)
+                self.__screen.show_message(LOST_LIFE_TITLE, LOST_LIFE_MSG)
                 self.__screen.remove_life()
+            # else:
+            #     survived_ast_lst.append(ast)
         if self.__asteroids_lst:
             for ast in self.__asteroids_lst:
                 for torp in self.__torpedos_lst:
                     print(self.__asteroids_lst)
                     if ast.has_intersection(torp):
-                        self.__asteroids_lst.remove(ast)
-                        self.__screen.unregister_asteroid(ast)
                         self.__generate_baby_asteroids(ast, torp)
-                        self.__add_score(ast.get_size())
+                        self.__screen.unregister_asteroid(ast)
+                        self.__screen.unregister_torpedo(torp)
+                        self.__asteroids_lst.remove(ast)
+                        self.__torpedos_lst.remove(torp)
+                        break
+                        #self.__add_score(ast.get_size())
+                    # else:
+                    #     survived_ast_lst.append(ast)
+                    #     survived_torp_lst.append(torp)
+
+                
+        # self.__asteroids_lst = survived_ast_lst
+        # self.__torpedos_lst = survived_torp_lst
 
     #########################################################################
     # part 3
     def __generate_asteroids(self):
-        while len(self.__asteroids_lst) < DEFAULT_ASTEROIDS_NUM:
+        for i in range(DEFAULT_ASTEROIDS_NUM):
             now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
                                     randint(self.__screen_min_y, self.__screen_max_y),
                                     randint(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED),
