@@ -16,6 +16,7 @@ class Ship:
         self.__speed_y = 0
         self.__direction = math.degrees(0)
         self.__radius = 1
+        self.__lives = 3
 
     def get_loc_x(self):
         return self.__loc_x
@@ -48,3 +49,12 @@ class Ship:
 
     def get_radius(self):
         return self.__radius
+
+    def got_hit(self):
+        self.__lives -= 1
+
+    def get_lives(self):
+        return self.__lives
+
+    def dead(self):
+        return self.__lives == 0

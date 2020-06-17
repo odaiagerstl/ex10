@@ -5,12 +5,12 @@ class Asteroid:
     """
     DES
     """
-    def __init__(self, loc_x, loc_y, speed_x, speed_y):
+    def __init__(self, loc_x, loc_y, speed_x, speed_y, size):
         self.__loc_x = loc_x
         self.__loc_y = loc_y
         self.__speed_x = speed_x
         self.__speed_y = speed_y
-        self.__size = 3
+        self.__size = size
         self.__radius = self.__size * 10
 
     def get_loc_x(self):
@@ -39,12 +39,10 @@ class Asteroid:
     def get_radius(self):
         return self.__radius
 
+    def get_size(self):
+        return self.__size
+
     def has_intersection(self, obj):
-        print("obj x", obj.get_loc_x())
-        print("obj y", obj.get_loc_y())
-        print("self x", self.__loc_x)
-        print("self y", self.__loc_y)
-        print(type(obj))
         d1 = obj.get_loc_x() - self.get_loc_x()
         d2 = obj.get_loc_y() - self.get_loc_y()
         distance = math.sqrt(d1 ** 2 + d2 ** 2)

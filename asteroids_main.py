@@ -6,16 +6,17 @@ from ship import Ship
 from asteroid import Asteroid
 from torpedo import Torpedo
 from random import randint
+from random import choice
 import math
 
-DEFAULT_ASTEROIDS_NUM = 5
-DEFAULT_TORPEDOS_NUM = 10
+DEFAULT_ASTEROIDS_NUM = 1
+DEFAULT_TORPEDOS_NUM = 100
 SIZE_ASTEROIDS = 3
 RIGHT = "right"
 LEFT = "left"
 LOST_LIFE_MSG = "You have lost a life."
 LOST_LIFE_TITLE = "Lost life."
-MIN_ASTEROID_SPEED = 1
+MIN_ASTEROID_SPEED = -4
 MAX_ASTEROID_SPEED = 4
 
 
@@ -43,7 +44,7 @@ class GameRunner:
         self.__score = 0
 
     def run(self):
-        self.__generate_asteroids()
+        self.__generate_asteroids(SIZE_ASTEROIDS)
 
         self._do_loop()
         self.__screen.start_screen()
@@ -60,6 +61,11 @@ class GameRunner:
         self.__draw_all()
         self.__all_obj_updates()
         self.__check_intersections()
+        end_game, title, mag = self.__end_game()
+        if end_game:
+            # self.__add_score(1)
+            self.__screen.show_message(title, mag)
+            self.__screen.end_game()
 
     def __all_obj_updates(self):
         self.__update_ship_location()
@@ -158,31 +164,41 @@ class GameRunner:
 
 
     def __solve_ship_intersections(self):
+        ast_to_remove = set()
         asteroid_intersected = self.__get_intersected_astroid(self.__ship)
         if asteroid_intersected is not None:
-            self.__screen.unregister_asteroid(asteroid_intersected)
-            self.__asteroids_lst.remove(asteroid_intersected)
+            size = asteroid_intersected.get_size()
+            ast_to_remove.add(asteroid_intersected)
             self.__screen.show_message(LOST_LIFE_TITLE, LOST_LIFE_MSG)
             self.__screen.remove_life()
-
+            self.__ship.got_hit()
+            possible_asteroid_speeds = [speed for speed in range(-4,4) if speed != 0]
+            now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
+                                    randint(self.__screen_min_y, self.__screen_max_y),
+                                    choice(possible_asteroid_speeds),
+                                    choice(possible_asteroid_speeds), size)
+            self.__asteroids_lst.append(now_asteroid)
+            self.__screen.register_asteroid(now_asteroid, size)
+        for ast in ast_to_remove:
+            self.__screen.unregister_asteroid(ast)
+            self.__asteroids_lst.remove(ast)
 
     def __check_intersections(self):
         self.__solve_ship_intersections()
         self.__solve_torpedoes_intersections()
-
-
 #########################################################################
     # part 3
-    def __generate_asteroids(self):
-        for i in range(DEFAULT_ASTEROIDS_NUM):
+    def __generate_asteroids(self, size):
+        while len(self.__asteroids_lst) < DEFAULT_ASTEROIDS_NUM:
             # TODO: edit asteroid speeds
+            possible_asteroid_speeds = [speed for speed in range(-4, 4) if speed != 0]
             now_asteroid = Asteroid(randint(self.__screen_min_x, self.__screen_max_x),
                                     randint(self.__screen_min_y, self.__screen_max_y),
-                                    randint(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED),
-                                    randint(MIN_ASTEROID_SPEED, MAX_ASTEROID_SPEED))
+                                    choice(possible_asteroid_speeds),
+                                    choice(possible_asteroid_speeds), size)
             if not now_asteroid.has_intersection(self.__ship):
                 self.__asteroids_lst.append(now_asteroid)
-                self.__screen.register_asteroid(now_asteroid, SIZE_ASTEROIDS)
+                self.__screen.register_asteroid(now_asteroid, size)
 
 
     def __calc_baby_ast_speed(self, ast, torp):
@@ -200,17 +216,19 @@ class GameRunner:
         x, y = ast.get_loc_x(), ast.get_loc_y()
         new_speeds = self.__calc_baby_ast_speed(ast, torp)
         baby_speed_x, baby_speed_y = new_speeds[0], new_speeds[1]
+        baby_size = 1
         if size != 1:
+            if size == 2:
+                baby_size = 1
             if size == 3:
                 baby_size = 2
-            elif size == 2:
-                baby_size = 1
-            baby_asteroid_1 = Asteroid(x, y, baby_speed_x, baby_speed_y)
-            baby_asteroid_2 = Asteroid(x, y, -baby_speed_x, -baby_speed_y)
+            baby_asteroid_1 = Asteroid(x, y, baby_speed_x, baby_speed_y, baby_size)
+            baby_asteroid_2 = Asteroid(x, y, -baby_speed_x, -baby_speed_y, baby_size)
             self.__asteroids_lst.append(baby_asteroid_1)
             self.__asteroids_lst.append(baby_asteroid_2)
             self.__screen.register_asteroid(baby_asteroid_1, baby_size)
             self.__screen.register_asteroid(baby_asteroid_2, baby_size)
+        self.__add_score(size)
 
 
     #########################################################################
@@ -229,7 +247,6 @@ class GameRunner:
     def __update_torpedo_location(self):
         for tor in self.__torpedos_lst:
             new_x, new_y = self.__calc_new_location(tor)
-            print("new x", new_x, "new_y", new_y)
             tor.set_location(new_x, new_y)
 
 
@@ -238,9 +255,30 @@ class GameRunner:
             self.__score += 20
         elif asteroid_size == 2:
             self.__score += 50
-        elif asteroid_size == 3:
+        elif asteroid_size == 1:
             self.__score += 100
         self.__screen.set_score(self.__score)
+    #########################################################################
+    # part 5
+    def __end_game(self):
+        end_game = False
+        title = ""
+        mag = ""
+        if len(self.__asteroids_lst) == 0:
+            end_game = True
+            title = "won"
+            mag = "Well done, You Won!!"
+        elif self.__ship.dead():
+            end_game = True
+            title = "lose"
+            mag = "You lose the game"
+        elif self.__screen.should_end():
+            end_game = True
+            title = "stop game"
+            mag = "You stop the game"
+        return end_game, title, mag
+
+
 
 
 def main(amount):
